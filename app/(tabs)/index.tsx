@@ -129,7 +129,7 @@ export default function CalculatorScreen() {
                   <Ionicons name="flash" size={9} color={T.ring} />
                   <Text style={s.ecgBadgeText}>ECG Prepaid</Text>
                 </View>
-                <Text style={s.appName}>ECG Calculator</Text>
+                <Text style={s.appName}>ECG Units Calculator</Text>
               </View>
               {/* Compact tariff label — change happens inside ApplianceSheet */}
               <View style={s.tariffPill}>
