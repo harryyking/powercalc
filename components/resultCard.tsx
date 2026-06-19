@@ -19,23 +19,10 @@ import {
   getTopSavingTip,
   type UrgencyLevel,
 } from '../lib/useCalculator';
+import { THEME } from '@/lib/theme';
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
-const T = {
-  background:      '#121212',
-  surface:         '#1a1a1a',
-  card:            '#171717',
-  secondary:       '#242424',
-  border:          '#292929',
-  foreground:      '#e2e8f0',
-  mutedForeground: '#a2a2a2',
-  primary:         '#006239',
-  primaryLight:    '#00a862',
-  primaryForeground: '#dde8e3',
-  ring:            '#4ade80',
-  amber:           '#F59E0B',
-  sm: 8, md: 14, lg: 20, pill: 999,
-};
+const T = THEME.colors
+const S = THEME.radius
 
 // ─── Urgency palette — dark-theme variants ────────────────────────────────────
 const URGENCY: Record<UrgencyLevel, {
@@ -149,66 +136,7 @@ export default function ResultCard({ result, compact = false, onSave, onShare }:
         </Text>
       </View>
 
-      {/* ── Breakdown ───────────────────────────────────────────────── */}
-      {result.breakdown.length > 0 && (
-        <View style={s.breakdownCard}>
-          <View style={s.breakdownHeader}>
-            <Text style={s.sectionTitle}>Where your units go</Text>
-            <Text style={s.sectionSub}>{result.breakdown.length} appliances</Text>
-          </View>
-
-          {result.breakdown.map((item, idx) => {
-            const pct = Math.min(100, item.percentageOfTotal);
-            return (
-              <View
-                key={item.appliance.id}
-                style={[s.breakdownRow, idx < result.breakdown.length - 1 && s.breakdownRowBorder]}
-              >
-                <View style={s.breakdownTop}>
-                  <View style={s.breakdownLeft}>
-                    <Text style={s.breakdownEmoji}>{item.appliance.emoji}</Text>
-                    <View>
-                      <Text style={s.breakdownName} numberOfLines={1}>
-                        {item.appliance.name}
-                        {item.appliance.quantity > 1 ? ` ×${item.appliance.quantity}` : ''}
-                      </Text>
-                      {item.daysGainedIfRemoved >= 0.5 && (
-                        <Text style={s.whatIf}>
-                          Turn off → +{formatDuration(
-                            Math.floor(item.daysGainedIfRemoved),
-                            Math.round((item.daysGainedIfRemoved % 1) * 24),
-                          )}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={s.breakdownRight}>
-                    <Text style={s.breakdownCost}>{formatGhs(item.dailyCostGhs)}</Text>
-                    <Text style={s.breakdownCostSub}>/day</Text>
-                  </View>
-                </View>
-
-                {/* Progress bar */}
-                <View style={s.barTrack}>
-                  <View
-                    style={[
-                      s.barFill,
-                      {
-                        width: `${pct}%` as any,
-                        // Gradient effect: high % = primary, low = dimmer
-                        backgroundColor: pct > 60 ? T.ring
-                          : pct > 30 ? T.primaryLight
-                          : T.primary,
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={s.barPct}>{Math.round(pct)}% of total</Text>
-              </View>
-            );
-          })}
-        </View>
-      )}
+    
 
       {/* ── Saving tip ──────────────────────────────────────────────── */}
       {tip && (
@@ -223,12 +151,7 @@ export default function ResultCard({ result, compact = false, onSave, onShare }:
       {/* ── Actions ─────────────────────────────────────────────────── */}
       {(onSave || onShare) && (
         <View style={s.actions}>
-          {onSave && (
-            <TouchableOpacity style={s.btnPrimary} onPress={onSave} activeOpacity={0.8}>
-              <Ionicons name="bookmark-outline" size={15} color={T.foreground} />
-              <Text style={s.btnPrimaryText}>Save</Text>
-            </TouchableOpacity>
-          )}
+    
           {onShare && (
             <TouchableOpacity style={s.btnSecondary} onPress={onShare} activeOpacity={0.8}>
               <Ionicons name="share-outline" size={15} color={T.primaryLight} />
@@ -257,7 +180,7 @@ const s = StyleSheet.create({
 
   // ── Hero card
   heroCard: {
-    borderRadius: T.lg,
+    borderRadius: S.lg,
     borderWidth: 1,
     padding: 20,
     gap: 10,
@@ -269,7 +192,7 @@ const s = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: T.pill,
+    borderRadius: S.pill,
     borderWidth: 1,
     marginBottom: 4,
   },
@@ -292,7 +215,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: T.md,
+    borderRadius: S.md,
     paddingVertical: 10,
     marginVertical: 2,
   },
@@ -310,7 +233,7 @@ const s = StyleSheet.create({
   // ── Breakdown card
   breakdownCard: {
     backgroundColor: T.secondary,
-    borderRadius: T.lg,
+    borderRadius: S.lg,
     borderWidth: 1,
     borderColor: T.border,
     overflow: 'hidden',
@@ -361,11 +284,11 @@ const s = StyleSheet.create({
   barTrack: {
     height: 5,
     backgroundColor: T.border,
-    borderRadius: T.pill,
+    borderRadius: S.pill,
     overflow: 'hidden',
   },
   barFill: {
-    height: 5, borderRadius: T.pill,
+    height: 5, borderRadius: S.pill,
   },
   barPct: {
     fontSize: 10, color: T.mutedForeground, textAlign: 'right',
@@ -376,7 +299,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     backgroundColor: 'rgba(120,60,0,0.15)',
-    borderRadius: T.md,
+    borderRadius: S.md,
     borderWidth: 1,
     borderColor: 'rgba(245,158,11,0.2)',
     padding: 14,
@@ -384,7 +307,7 @@ const s = StyleSheet.create({
   },
   tipIconWrap: {
     width: 30, height: 30,
-    borderRadius: T.sm,
+    borderRadius: S.sm,
     backgroundColor: 'rgba(245,158,11,0.1)',
     borderWidth: 1,
     borderColor: 'rgba(245,158,11,0.2)',
@@ -405,7 +328,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 7,
     backgroundColor: T.secondary,
-    borderRadius: T.md,
+    borderRadius: S.md,
     borderWidth: 1,
     borderColor: T.border,
     paddingVertical: 13,
@@ -420,7 +343,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 7,
     backgroundColor: 'rgba(0,98,57,0.1)',
-    borderRadius: T.md,
+    borderRadius: S.md,
     borderWidth: 1,
     borderColor: 'rgba(0,168,98,0.25)',
     paddingVertical: 13,
@@ -434,12 +357,12 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderRadius: T.md,
+    borderRadius: S.md,
     borderWidth: 1,
     padding: 12,
   },
   compactIconWrap: {
-    width: 32, height: 32, borderRadius: T.sm,
+    width: 32, height: 32, borderRadius: S.sm,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   compactBody: { flex: 1 },

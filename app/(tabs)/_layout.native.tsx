@@ -45,8 +45,8 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Calculator</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf="bolt.fill"   // iOS SF Symbol
-          md="bolt"        // Android Material Symbol
+          sf="square.grid.3x3.fill"   
+          md="calculate"       
         />
       </NativeTabs.Trigger>
 
@@ -56,15 +56,6 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon
           sf="clock.fill"
           md="history"
-        />
-      </NativeTabs.Trigger>
-
-      {/* 💡 Tips */}
-      <NativeTabs.Trigger name="tips">
-        <NativeTabs.Trigger.Label>Tips</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf="lightbulb.fill"
-          md="lightbulb"
         />
       </NativeTabs.Trigger>
 

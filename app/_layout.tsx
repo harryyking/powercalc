@@ -9,63 +9,47 @@ import { scheduleReturnReminder } from '@/lib/notification';
 
 SplashScreen.preventAutoHideAsync();
 
-// onboarding storage
-const onboardingStorage = createMMKV({
-  id: 'powercalc_gh.onboarding',
-});
+const onboarding_storage = createMMKV({ id: 'onboarding' });
 
-export const ONBOARDING_KEY = 'done';
+const onboardingKey = 'completed';
 
-export function markOnboardingDone() {
-  onboardingStorage.set(ONBOARDING_KEY, true);
+export function setOnboardingCompleted() {
+  onboarding_storage.set(onboardingKey, true);
 }
 
-function isOnboardingDone() {
-  return onboardingStorage.getBoolean(ONBOARDING_KEY) ?? false;
+export function isOnboardingCompleted() {
+   return onboarding_storage.getBoolean(onboardingKey);
 }
+
 
 export default function RootLayout() {
   const segments = useSegments();
+  const [isReady, setIsReady] = useState(false);
 
-  const [onboardingDone, setOnboardingDone] =
-    useState<boolean | null>(null);
 
-  // Read onboarding state
   useEffect(() => {
-    setOnboardingDone(isOnboardingDone());
-  }, []);
+    const hasCompletedOnboarding = isOnboardingCompleted();
+    const inOnboardingFlow = segments[0] === 'onboarding';
+
+        if (!hasCompletedOnboarding && !inOnboardingFlow) {
+      router.replace('/');
+    } else if (hasCompletedOnboarding && inOnboardingFlow) {
+      router.replace('/(tabs)');
+    }
+
+    setIsReady(true);
+
+  }, [segments]);
+    
 
   // Notifications
   useEffect(() => {
     scheduleReturnReminder();
   }, []);
 
-  // Hide splash once onboarding state is known
-  useEffect(() => {
-    if (onboardingDone === null) return;
 
-    SplashScreen.hideAsync();
-  }, [onboardingDone]);
+  if (!isReady) return null;
 
-  // Routing
-  useEffect(() => {
-    if (onboardingDone === null) return;
-
-    const inTabs = segments[0] === '(tabs)';
-
-    if (onboardingDone && !inTabs) {
-      router.replace('/(tabs)');
-    }
-
-    if (!onboardingDone && inTabs) {
-      router.replace('/');
-    }
-  }, [segments, onboardingDone]);
-
-  // Don't render until onboarding state is loaded
-  if (onboardingDone === null) {
-    return null;
-  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -75,6 +59,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" />
         </Stack>
 
       </SafeAreaProvider>

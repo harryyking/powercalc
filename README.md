@@ -146,7 +146,7 @@ E-Levy: **ABOLISHED** April 3, 2025 — no longer applies to any transactions.
 
 ## App Store Listing Tips (based on SendSmart experience)
 
-**Name:** PowerCalc GH — ECG Units
+**Name:** ECG Calculator— ECG Units
 **Subtitle:** How long will your credit last?
 **Keywords:** ECG, electricity, prepaid, units, Ghana, PURC, kWh, dumsor, light bill
 **Screenshots:** Show the main result — "Your ₵50 will last 4 days" — big and clear on first screenshot.

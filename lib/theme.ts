@@ -1,35 +1,40 @@
 export const THEME = {
-  light: {
+
     colors: {
-      background: '#121212',     
-      surface: '#FFFFFF',
-      surfaceLow: '#F6F3EC',
-      card: "#171717",
-      
-      foreground: '#e2e8f0',        
-      onBackground: '#4A3B28',
-      primary: '#006239',          
-      primaryForeground: '#dde8e3',
-      accent: ' #313131',            
-      accentForeground: '#fafafa', 
-      secondary: '#242424',
-      secondaryForeground: '#3A3226',
-
-      muted: '#1f1f1f',
-      mutedForeground: '#a2a2a2',
-
-      border: '#292929',
-      input: '#242424',
-      destructive: '#541c15',
-      ring: '#4ade80',
+  background:          '#0e0e0e',
+  surface:             '#161616',
+  surfaceElevated:     '#1c1c1c',
+  card:                '#131313',
+  foreground:          '#e8eae8',
+  onBackground:        '#8a8a8a',
+  primary:             '#006239',
+  primaryLight:        '#00a862',
+  primaryForeground:   '#dde8e3',
+  accent:              '#2a2a2a',
+  secondary:           '#1e1e1e',
+  secondaryForeground: '#9a9a9a',
+  muted:               '#1c1c1c',
+  mutedForeground:     '#606060',
+  border:              '#242424',
+  input:               '#191919',
+  ring:                '#3ecf6e',
+  ringDim:             'rgba(62,207,110,0.12)',
+  ringBorder:          'rgba(62,207,110,0.22)',
+  warning:             '#f59e0b',
+  blue:                '#3b82f6',
+  blueDim:             'rgba(59,130,246,0.08)',
+  blueBorder:          'rgba(59,130,246,0.18)',
+  amber:           '#F59E0B',
+  amberDim:        'rgba(245,158,11,0.12)',
+   destructiveLight:'#f87171',
     },
 
     radius: {
-      sm: 8,
-      md: 14,
-      lg: 20,
-      xl: 28,
-      pill: 999,
+  sm:   6,
+  md:   12,
+  lg:   18,
+  xl:   24,
+  pill: 999,
     }
-  }
+  
 };

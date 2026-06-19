@@ -40,7 +40,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,           // hide default label — we handle it in icon
+        tabBarShowLabel: false,       
         tabBarStyle: styles.tabBar,
       }}
     >
@@ -60,14 +60,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="tips"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="💡" label="Tips" focused={focused} />
-          ),
-        }}
-      />
+  
       <Tabs.Screen
         name="settings"
         options={{

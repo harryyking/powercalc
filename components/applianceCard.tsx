@@ -1,49 +1,36 @@
 /**
  * components/ApplianceCard.tsx
  *
- * Fix: cost badge moved from the header row into the info column,
- * stacked below the name. This removes the horizontal competition
- * between [emoji | name | cost badge | toggle] that caused truncation.
+ * Compact 2-column tile. No inline expansion.
  *
- * Header row is now just [emoji | name + sub-row | toggle] —
- * the name gets all the flex space it needs.
+ * Tap behaviour:
+ *   – Inactive card  → add to active list + open edit sheet
+ *   – Active card    → open edit sheet (re-configure)
+ *   – Toggle circle  → always toggles on/off (quick remove when active)
  */
-import React, { useState } from 'react';
+
+import React from 'react';
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import type { ActiveAppliance, Appliance } from '../types';
 import { formatGhs } from '../lib/useCalculator';
+import { THEME } from '@/lib/theme';
 
-// ─── Theme tokens ─────────────────────────────────────────────────────────────
-const T = {
-  background:        '#121212',
-  surface:           '#1a1a1a',
-  card:              '#171717',
-  secondary:         '#242424',
-  input:             '#242424',
-  border:            '#292929',
-  foreground:        '#e2e8f0',
-  mutedForeground:   '#a2a2a2',
-  primary:           '#006239',
-  primaryLight:      '#00a862',
-  primaryForeground: '#dde8e3',
-  ring:              '#4ade80',
-  amber:             '#F59E0B',
-
-  sm: 8, md: 14, lg: 20, pill: 999,
-};
+const T = THEME.colors;
+const S = THEME.radius;
 
 interface Props {
   appliance: Appliance;
   activeAppliance?: ActiveAppliance;
   effectiveRatePerKwh: number;
+  /** Toggle-circle press — always adds or removes */
   onToggle: (appliance: Appliance) => void;
-  onUpdate: (id: string, changes: Partial<ActiveAppliance>) => void;
+  /** Card-body press — add-if-needed then open the edit sheet */
+  onCardPress: (appliance: Appliance) => void;
 }
 
 export default function ApplianceCard({
@@ -51,7 +38,7 @@ export default function ApplianceCard({
   activeAppliance,
   effectiveRatePerKwh,
   onToggle,
-  onUpdate,
+  onCardPress,
 }: Props) {
   const isActive = !!activeAppliance;
   const hours    = activeAppliance?.hoursPerDay ?? appliance.defaultHoursPerDay;
@@ -61,147 +48,55 @@ export default function ApplianceCard({
   const dailyKwh  = (watts * quantity * hours) / 1000;
   const dailyCost = dailyKwh * effectiveRatePerKwh;
 
-  const [showWattEdit, setShowWattEdit] = useState(false);
-
-  function formatHours(h: number): string {
-    if (h < 1)    return `${Math.round(h * 60)} min`;
-    if (h === 24) return '24 h (always on)';
-    return `${h % 1 === 0 ? h : h.toFixed(1)} hr${h !== 1 ? 's' : ''}`;
-  }
-
   return (
     <TouchableOpacity
       style={[s.card, isActive && s.cardActive]}
-      onPress={() => onToggle(appliance)}
-      activeOpacity={0.75}
+      onPress={() => onCardPress(appliance)}
+      activeOpacity={0.72}
     >
-      {/* ── Header row ──────────────────────────────────────────────── */}
-      {/*
-        Layout: [emojiWrap] [info: flex-1] [toggleCircle]
-        The cost badge lives INSIDE the info column now, never competing
-        horizontally with the name for space.
-      */}
-      <View style={s.header}>
+      <View style={s.row}>
 
-        {/* Emoji */}
+        {/* Emoji ───────────────────────────────────────────────── */}
         <View style={[s.emojiWrap, isActive && s.emojiWrapActive]}>
           <Text style={s.emoji}>{appliance.emoji}</Text>
         </View>
 
-        {/* Name + sub-row (watts · cost badge) */}
+        {/* Name + sub-label ─────────────────────────────────────── */}
         <View style={s.info}>
-          {/* Name — no numberOfLines cap, wraps naturally if long */}
-          <Text style={[s.name, isActive && s.nameActive]}>
+          <Text
+            style={[s.name, isActive && s.nameActive]}
+            numberOfLines={2}
+          >
             {appliance.name}
           </Text>
 
-          {/* Sub-row below the name */}
-          <View style={s.subRow}>
+          {isActive ? (
+            <View style={s.costBadge}>
+              <Text style={s.costText}>{formatGhs(dailyCost)}</Text>
+              <Text style={s.costSub}> /day</Text>
+            </View>
+          ) : (
             <Text style={s.wattsLabel}>{watts}W</Text>
-
-            {/* Cost badge: only shown when active, sits inline after watts */}
-            {isActive && (
-              <View style={s.costBadge}>
-                <Text style={s.costText}>{formatGhs(dailyCost)}</Text>
-                <Text style={s.costSub}>/day</Text>
-              </View>
-            )}
-          </View>
+          )}
         </View>
 
-        {/* Toggle circle — fixed 26px, always at the far right */}
-        <View style={[s.toggleCircle, isActive && s.toggleCircleActive]}>
+        {/* Toggle circle ────────────────────────────────────────── */}
+        <TouchableOpacity
+          style={[s.toggleCircle, isActive && s.toggleCircleActive]}
+          onPress={() => onToggle(appliance)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Text style={[s.toggleIcon, isActive && s.toggleIconActive]}>
             {isActive ? '✓' : '+'}
           </Text>
-        </View>
+        </TouchableOpacity>
 
       </View>
 
-      {/* ── Expanded controls ────────────────────────────────────────── */}
+      {/* "Tap to configure" hint — only on active cards ───────── */}
       {isActive && (
-        <View style={s.controls}>
-
-          {/* Hours slider */}
-          <View style={s.labelRow}>
-            <Text style={s.controlLabel}>Hours / day</Text>
-            <Text style={s.controlValue}>{formatHours(hours)}</Text>
-          </View>
-          <Slider
-            style={s.slider}
-            minimumValue={appliance.minHours}
-            maximumValue={appliance.maxHours}
-            step={appliance.stepHours}
-            value={hours}
-            minimumTrackTintColor={T.primaryLight}
-            maximumTrackTintColor={T.border}
-            thumbTintColor={T.ring}
-            onValueChange={(v) =>
-              onUpdate(appliance.id, { hoursPerDay: parseFloat(v.toFixed(2)) })
-            }
-          />
-
-          {/* Bottom row: qty stepper + edit watts */}
-          <View style={s.bottomRow}>
-            {/* Quantity stepper */}
-            <View style={s.stepperRow}>
-              <Text style={s.controlLabel}>Qty</Text>
-              <View style={s.stepper}>
-                <TouchableOpacity
-                  style={s.stepBtn}
-                  onPress={() =>
-                    onUpdate(appliance.id, { quantity: Math.max(1, quantity - 1) })
-                  }
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={s.stepBtnText}>−</Text>
-                </TouchableOpacity>
-                <Text style={s.stepNum}>{quantity}</Text>
-                <TouchableOpacity
-                  style={s.stepBtn}
-                  onPress={() =>
-                    onUpdate(appliance.id, { quantity: quantity + 1 })
-                  }
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={s.stepBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Edit watts toggle */}
-            <TouchableOpacity
-              style={s.editWattsBtn}
-              onPress={() => setShowWattEdit(!showWattEdit)}
-            >
-              <Text style={s.editWattsText}>
-                {showWattEdit ? 'Done' : '⚡ Edit watts'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Watt override slider */}
-          {showWattEdit && (
-            <View style={s.wattSection}>
-              <View style={s.labelRow}>
-                <Text style={s.controlLabel}>Wattage</Text>
-                <Text style={[s.controlValue, { color: T.amber }]}>{watts}W</Text>
-              </View>
-              <Slider
-                style={s.slider}
-                minimumValue={1}
-                maximumValue={appliance.defaultWatts * 2}
-                step={1}
-                value={watts}
-                minimumTrackTintColor={T.amber}
-                maximumTrackTintColor={T.border}
-                thumbTintColor={T.amber}
-                onValueChange={(v) =>
-                  onUpdate(appliance.id, { watts: Math.round(v) })
-                }
-              />
-            </View>
-          )}
+        <View style={s.editHint}>
+          <Text style={s.editHintText}>Tap to configure ›</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -211,221 +106,133 @@ export default function ApplianceCard({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   card: {
+    // Explicit 48% keeps the 2-col grid even when parent uses flexWrap
+    width: '100%',
     backgroundColor: T.secondary,
-    borderRadius: T.md,
+    borderRadius: S.md,
     borderWidth: 1,
     borderColor: T.border,
     padding: 12,
-    marginBottom: 8,
     overflow: 'hidden',
+    gap: 6,
+    marginBottom: 8
   },
   cardActive: {
     backgroundColor: T.card,
-    borderColor: T.border,
+    borderColor: T.primaryLight,
+    // Subtle glow on the border
+    shadowColor: T.ring,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
-  header: {
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',   // vertically centre all three columns
-    gap: 10,
+    alignItems: 'center',
+    gap: 8,
   },
 
+  // Emoji
   emojiWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: T.sm,
+    width: 34,
+    height: 34,
+    borderRadius: S.sm,
     backgroundColor: T.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: T.border,
-    // flex-shrink: 0 is the default — it will never compress
+    flexShrink: 0,
   },
   emojiWrapActive: {
     borderColor: T.primary,
     backgroundColor: 'rgba(0, 98, 57, 0.15)',
   },
   emoji: {
-    fontSize: 19,
+    fontSize: 18,
   },
 
-  // info column stretches to fill all remaining horizontal space
+  // Info column
   info: {
     flex: 1,
     gap: 4,
-    // No minWidth/maxWidth needed — flex: 1 + no siblings with flex
-    // means this always gets exactly the available space.
+    minWidth: 0,
   },
   name: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: T.mutedForeground,
-    // Removed numberOfLines={1} — name now wraps to a second line
-    // rather than truncating. Most names are ≤ 20 chars so this
-    // rarely wraps, but "Air Conditioner" etc. will show in full.
+    lineHeight: 16,
   },
   nameActive: {
     color: T.foreground,
     fontWeight: '600',
   },
-
-  // Sub-row sits below the name: [watts] [cost badge?]
-  subRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',   // in case both are wide on a small device
-  },
-  wattsLabel: {
-    fontSize: 11,
-    color: T.mutedForeground,
-    opacity: 0.7,
-  },
-
-  // Cost badge — now in the sub-row, not the header row
   costBadge: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 2,
-    backgroundColor: 'rgba(0, 98, 57, 0.25)',
-    borderRadius: T.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0, 98, 57, 0.2)',
+    borderRadius: S.pill,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderWidth: 1,
     borderColor: T.primary,
   },
   costText: {
-    color: T.ring,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
+    color: T.ring,
   },
   costSub: {
-    color: T.primaryLight,
     fontSize: 9,
+    color: T.primaryLight,
+  },
+  wattsLabel: {
+    fontSize: 10,
+    color: T.mutedForeground,
+    opacity: 0.65,
   },
 
+  // Toggle
   toggleCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: T.border,
     backgroundColor: T.card,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,   // never compress — always 26×26
+    flexShrink: 0,
   },
   toggleCircleActive: {
     backgroundColor: T.primary,
     borderColor: T.primaryLight,
   },
   toggleIcon: {
-    fontSize: 13,
+    fontSize: 12,
     color: T.mutedForeground,
-    lineHeight: 15,
+    lineHeight: 14,
   },
   toggleIconActive: {
     color: T.primaryForeground,
     fontWeight: '700',
   },
 
-  // ── Controls ──────────────────────────────────────────────────────────────
-  controls: {
-    marginTop: 12,
-    paddingTop: 12,
+  // Edit hint strip at bottom of active card
+  editHint: {
     borderTopWidth: 1,
-    borderTopColor: T.border,
-    gap: 2,
+    borderTopColor: 'rgba(0,98,57,0.2)',
+    paddingTop: 5,
   },
-
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  controlLabel: {
-    fontSize: 11,
-    color: T.mutedForeground,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  controlValue: {
-    fontSize: 12,
-    fontWeight: '700',
+  editHintText: {
+    fontSize: 9,
     color: T.primaryLight,
-  },
-
-  slider: {
-    width: '100%',
-    height: 32,
-  },
-
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 6,
-  },
-
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: T.card,
-    borderRadius: T.sm,
-    borderWidth: 1,
-    borderColor: T.border,
-    overflow: 'hidden',
-  },
-  stepBtn: {
-    width: 32,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: T.card,
-  },
-  stepBtnText: {
-    fontSize: 17,
-    color: T.primaryLight,
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  stepNum: {
-    minWidth: 28,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '700',
-    color: T.foreground,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: T.border,
-    paddingVertical: 5,
-  },
-
-  editWattsBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: T.pill,
-    backgroundColor: T.card,
-    borderWidth: 1,
-    borderColor: T.border,
-  },
-  editWattsText: {
-    fontSize: 11,
-    color: T.mutedForeground,
     fontWeight: '500',
-  },
-
-  wattSection: {
-    marginTop: 8,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: T.border,
+    textAlign: 'right',
+    opacity: 0.8,
   },
 });

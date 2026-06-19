@@ -1,79 +1,85 @@
-
-
 /**
  * ECG / PURC Ghana Electricity Tariffs
  *
- * Sources:
- *  - PURC Multi-Year Tariff Order (MYTO) 2026–2030 — effective January 2026
- *  - April 2026 quarterly adjustment: 4.81% reduction (cedi appreciation + falling inflation)
- *  - GlobalPetrolPrices.com Ghana — June 2025 residential: GHS 1.820/kWh
- *  - AccraStreetJournal.com — residential 0–300 kWh: GHS 1.9688/kWh (post Jan 2026 MYTO)
- *  - Lifeline band (0–30 kWh): GHS 0.8690/kWh
- *  - E-Levy: ABOLISHED April 3 2025 by President Mahama — no longer applies
+ * Source: PURC "2026 Second Quarter Tariff Review Decision for Electricity
+ * and Water" — official release dated 13-03-2026, effective April 01, 2026.
+ * https://www.purc.com.gh/attachment/288818-20260313090334.pdf
  *
- * IMPORTANT: PURC reviews tariffs quarterly via the Automatic Adjustment Formula (AAF).
+ * Q2 2026 adjustment: average -4.81% on electricity (varies by customer
+ * category — see Table 2 of the decision), driven by cedi appreciation
+ * (GHS/USD 12.0067 → 11.1931) and falling inflation (8.00% → 4.17%).
+ *
+ * IMPORTANT — how lifeline actually works:
+ * Lifeline is a SEPARATE registered customer category, not an automatic
+ * "first 30 kWh" discount applied to every residential bill. A normal
+ * residential customer's entire consumption — including their first
+ * 30 kWh — is billed at the residential 0–300 kWh rate. Only customers
+ * specifically registered as lifeline (very low, verified consumption)
+ * get the cheaper 0.8690/kWh band. We keep `lifeline` and `residential`
+ * as fully separate tariff configs (no shared band) to reflect this.
+ *
+ * PURC reviews tariffs quarterly via the Automatic Adjustment Formula (AAF).
  * Always verify against https://purc.com.gh before a release.
- * Update `lastUpdated` and band rates when PURC issues a new quarterly adjustment.
+ * Update `lastUpdated` and band rates when PURC issues a new quarterly
+ * adjustment (typically early Jan / Apr / Jul / Oct).
  */
 
 import { TariffConfig, TariffType } from "@/types";
 
 export const TARIFFS: Record<TariffType, TariffConfig> = {
   /**
-   * Residential tariff — typical household
-   * Tiered: lifeline band (0–30 kWh) is subsidised.
-   * Above 30 kWh the standard residential rate applies.
+   * Residential tariff — standard household, NOT registered lifeline.
+   * Tiered: 0–300 kWh, then 301+ kWh. Flat monthly service charge applies
+   * regardless of which band consumption lands in (it's a connection fee,
+   * not a per-band fee).
    */
   residential: {
     type: 'residential',
     label: 'Residential',
     description: 'Standard home user',
-    lastUpdated: '2026-04-01', // April 2026 quarterly adjustment
+    lastUpdated: '2026-04-01', // PURC Q2 2026 quarterly adjustment
     bands: [
       {
         minKwh: 0,
-        maxKwh: 30,
-        ratePerKwh: 0.8690,   // Lifeline subsidy band
-        serviceChargePerMonth: 0,
-      },
-      {
-        minKwh: 30,
         maxKwh: 300,
-        ratePerKwh: 1.9688,   // Standard residential
-        serviceChargePerMonth: 3.50, // ECG fixed service charge (approx)
+        ratePerKwh: 1.968825,  // 196.8825 GHp/kWh
+        serviceChargePerMonth: 10.730886, // 1073.0886 GHp/month, flat
       },
       {
         minKwh: 300,
         maxKwh: null,
-        ratePerKwh: 2.1500,   // High consumption band
-        serviceChargePerMonth: 3.50,
+        ratePerKwh: 2.601481,  // 260.1481 GHp/kWh
+        serviceChargePerMonth: 10.730886, // same flat connection charge
       },
     ],
   },
 
   /**
-   * Lifeline tariff — low-income / very low consumption households
-   * Applies when total monthly usage stays within 0–30 kWh.
-   * If usage exceeds 30 kWh in a month, the full residential rate kicks in.
+   * Lifeline tariff — separately registered low-consumption households.
+   * Single band, capped at 30 kWh/month. If a lifeline customer exceeds
+   * 30 kWh in a month, ECG bills the excess at the standard residential
+   * rate (not modeled here — out of scope for the prepaid estimator,
+   * since lifeline customers are by definition very low consumption).
    */
   lifeline: {
     type: 'lifeline',
     label: 'Lifeline',
-    description: 'Low-consumption household (≤ 30 kWh/month)',
+    description: 'Registered low-consumption household (≤ 30 kWh/month)',
     lastUpdated: '2026-04-01',
     bands: [
       {
         minKwh: 0,
         maxKwh: 30,
-        ratePerKwh: 0.8690,
-        serviceChargePerMonth: 0,
+        ratePerKwh: 0.8690,    // 86.9000 GHp/kWh
+        serviceChargePerMonth: 2.13, // 213.0000 GHp/month
       },
     ],
   },
 
   /**
-   * Non-Residential / Business tariff (SLT LV — Small & Large Tertiary, Low Voltage)
-   * For shops, offices, small businesses on the standard low-voltage grid.
+   * Non-Residential / Business tariff — shops, offices, small businesses
+   * on the standard low-voltage grid. Tiered the same way as residential:
+   * 0–300 kWh, then 301+ kWh, plus a flat monthly service charge.
    */
   business: {
     type: 'business',
@@ -83,9 +89,15 @@ export const TARIFFS: Record<TariffType, TariffConfig> = {
     bands: [
       {
         minKwh: 0,
+        maxKwh: 300,
+        ratePerKwh: 1.777539,  // 177.7539 GHp/kWh
+        serviceChargePerMonth: 12.428245, // 1242.8245 GHp/month
+      },
+      {
+        minKwh: 300,
         maxKwh: null,
-        ratePerKwh: 1.8980,
-        serviceChargePerMonth: 8.00, // higher fixed charge for commercial
+        ratePerKwh: 2.164873,  // 216.4873 GHp/kWh
+        serviceChargePerMonth: 12.428245,
       },
     ],
   },
@@ -169,16 +181,17 @@ export function creditToKwh(
 /** Monthly service charges by tariff type */
 export function getServiceCharge(tariffType: TariffType): number {
   const config = TARIFFS[tariffType];
-  // Use the primary (non-lifeline) band's service charge
-  const mainBand = config.bands[config.bands.length - 1];
-  return mainBand.serviceChargePerMonth;
+  // Service charge is flat per customer category — same across all
+  // bands in that category, so any band's value works. Use the first.
+  return config.bands[0].serviceChargePerMonth;
 }
 
 /** Human-readable rate label e.g. "₵1.97 / kWh" */
 export function formatRate(tariffType: TariffType): string {
-  const primaryBand = TARIFFS[tariffType].bands.find(
-    (b) => b.maxKwh === null || b.maxKwh > 30,
-  );
-  const rate = primaryBand?.ratePerKwh ?? TARIFFS[tariffType].bands[0].ratePerKwh;
-  return `₵${rate.toFixed(2)} / kWh`;
+  // Primary/dominant band = the first band above any lifeline-style cap,
+  // i.e. the band most customers in this category actually fall into.
+  const primaryBand =
+    TARIFFS[tariffType].bands.find((b) => b.minKwh === 0) ??
+    TARIFFS[tariffType].bands[0];
+  return `₵${primaryBand.ratePerKwh.toFixed(2)} / kWh`;
 }
