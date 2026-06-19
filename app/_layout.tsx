@@ -32,13 +32,13 @@ export default function RootLayout() {
     const inOnboardingFlow = segments[0] === 'onboarding';
 
         if (!hasCompletedOnboarding && !inOnboardingFlow) {
-      router.replace('/');
+      router.replace('/onboarding');
     } else if (hasCompletedOnboarding && inOnboardingFlow) {
       router.replace('/(tabs)');
     }
 
     setIsReady(true);
-
+    SplashScreen.hideAsync();
   }, [segments]);
     
 
